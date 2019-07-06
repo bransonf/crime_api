@@ -4,19 +4,20 @@ library(plumber)
 library(dplyr)
 library(jsonlite)
 library(magrittr)
-load("stl_crime/crimedb.rda")
+library(compstatr)
+load("crimedb.rda")
 
 #* @apiTitle STL Crime Data
 
-#* Return JSON with Crimes
+#* Return coordinates of crimes
 #* @param year The year crime occured
 #* @param month The month crime occured
 #* @param gun If 'true' filters for gun crime
 #* @param coords Default WGS, else 'NAD_MO_EAST'
-#* @param 
+#* @param ucr Currently supports `part_one` or `all`
 #* @json
-#* @get /crime
-function(year = "2019", month = "5", gun = "false", coords = "WGS") {
+#* @get /coords
+function(year = "2019", month = "5", gun = "false", coords = "WGS", ucr = "all") {
   year %<>% as.numeric()
   month %<>% as.numeric()
 
@@ -26,14 +27,89 @@ function(year = "2019", month = "5", gun = "false", coords = "WGS") {
   if(gun == "true"){
   f %<>% filter(gun_crime)
   }
-  if(coords == "WGS"){
-  f %<>% select(db_id, description, date_occur, ucr_category, wgs_x, wgs_y)
-  }
-  if(coords == "NAD_MO_EAST"){
-  f %<>% select(db_id, description, date_occur, ucr_category, x_coord, y_coord)  
+  if(ucr == "part_one"){
+  f %<>% filter(ucr_category %in% c('Homicide','Rape','Aggravated Assault','Robbery'))  
   }
   
-  f %<>% toJSON()
+  if(coords == "WGS"){
+  f %<>% select(db_id, ucr_category, wgs_x, wgs_y)
+  }
+  if(coords == "NAD_MO_EAST"){
+  f %<>% select(db_id, ucr_category, x_coord, y_coord)  
+  }
   
   return(f)
 }
+
+#* Return Latest Available Data Month
+#* @get /latest
+function(){
+  compstatr::cs_last_update()
+}
+
+#* Return JSON with detailed information about a crime
+#* @param dbid The unique database identifier of a crime
+#* @json
+#* @get /crime
+function(dbid) {
+  crimedb %>% 
+    filter(db_id == dbid) %>%
+    select(-x_coord,-y_coord,-wgs_x,-wgs_y) -> f
+  
+  return(f)
+}
+
+#* Get monthly neighborhood summary
+#* @param year The year crime occured
+#* @param month The month crime occured
+#* @param gun If 'true' filters for gun crime
+#* @json
+#* @get /nbhood
+function(year = "2019", month = "5", gun = "false"){
+  year %<>% as.numeric()
+  month %<>% as.numeric()
+  
+  crimedb %>%
+    filter(year_occur == year) %>%
+    filter(month_occur == month) -> f
+  if(gun == "true"){
+    f %<>% filter(gun_crime)
+  }
+   
+  f %<>% 
+    group_by(neighborhood, ucr_category) %>%
+    summarise(Incidents = n())
+   
+  return(f)  
+}
+
+#* Get monthly district summary
+#* @param year The year crime occured
+#* @param month The month crime occured
+#* @param gun If 'true' filters for gun crime
+#* @param 
+#* @json
+#* @get /district
+
+function(year = "2019", month = "5", gun = "false"){
+  year %<>% as.numeric()
+  month %<>% as.numeric()
+  
+  crimedb %>%
+    filter(year_occur == year) %>%
+    filter(month_occur == month) -> f
+  if(gun == "true"){
+    f %<>% filter(gun_crime)
+  }
+  
+  f %<>% 
+    group_by(district, ucr_category) %>%
+    summarise(Incidents = n())
+  
+  return(f)  
+  
+}
+
+
+
+
