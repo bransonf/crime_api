@@ -1,10 +1,10 @@
-# The Core Crime Data Plumber API, Right now it is very intensive, need to further break down
+# The Core Crime Data Plumber API
 
 library(plumber)
 library(dplyr)
 library(jsonlite)
 library(magrittr)
-library(compstatr)
+library(compstatr) # requires GitHub version
 load("crimedb.rda")
 
 #* @apiTitle STL Crime Data
@@ -14,25 +14,32 @@ load("crimedb.rda")
 #* @param month The month crime occured
 #* @param gun If 'true' filters for gun crime
 #* @param coords Default WGS, else 'NAD_MO_EAST'
-#* @param ucr Currently supports `part_one` or `all`
+#* @param ucr Name of the crime, as it appears in the Inputs, else 'all'
 #* @json
 #* @get /coords
 function(year = "2019", month = "June", gun = "false", coords = "WGS", ucr = "all") {
+  # string manip
   year %<>% as.numeric()
   month <- which(month.name == month)
 
+  # time (baseline) filtering
   crimedb %>%
     filter(year_occur == year) %>%
     filter(month_occur == month) -> f
+  
+  # gun filtering
   if(gun == "true"){
   f %<>% filter(gun_crime)
   }
   
+  # ucr filtering
   if(ucr == "all"){NULL}
   else{
+    ucr %<>% jsonlite::fromJSON()
     f %<>% filter(ucr_category %in% ucr)
   }
   
+  # coordinate selection
   if(coords == "WGS"){
   f %<>% select(db_id, ucr_category, wgs_x, wgs_y)
   }
@@ -69,16 +76,21 @@ function(dbid) {
 #* @json
 #* @get /nbhood
 function(year = "2019", month = "June", gun = "false"){
+  # string manip
   year %<>% as.numeric()
-  month %<>% as.numeric()
+  month <- which(month.name == month)
   
+  # time (baseline) filtering
   crimedb %>%
     filter(year_occur == year) %>%
     filter(month_occur == month) -> f
+  
+  # gun filtering
   if(gun == "true"){
     f %<>% filter(gun_crime)
   }
-   
+  
+  # summary information 
   f %<>% 
     group_by(neighborhood, ucr_category) %>%
     summarise(Incidents = n())
@@ -95,16 +107,21 @@ function(year = "2019", month = "June", gun = "false"){
 #* @get /district
 
 function(year = "2019", month = "June", gun = "false"){
+  # string manip
   year %<>% as.numeric()
-  month %<>% as.numeric()
+  month <- which(month.name == month)
   
+  # time (baseline) filtering
   crimedb %>%
     filter(year_occur == year) %>%
     filter(month_occur == month) -> f
+  
+  # gun filtering
   if(gun == "true"){
     f %<>% filter(gun_crime)
   }
   
+  # summary information
   f %<>% 
     group_by(district, ucr_category) %>%
     summarise(Incidents = n())
