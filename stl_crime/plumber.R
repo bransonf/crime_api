@@ -17,9 +17,9 @@ load("crimedb.rda")
 #* @param ucr Currently supports `part_one` or `all`
 #* @json
 #* @get /coords
-function(year = "2019", month = "5", gun = "false", coords = "WGS", ucr = "all") {
+function(year = "2019", month = "June", gun = "false", coords = "WGS", ucr = "all") {
   year %<>% as.numeric()
-  month %<>% as.numeric()
+  month <- which(month.name == month)
 
   crimedb %>%
     filter(year_occur == year) %>%
@@ -27,8 +27,11 @@ function(year = "2019", month = "5", gun = "false", coords = "WGS", ucr = "all")
   if(gun == "true"){
   f %<>% filter(gun_crime)
   }
-  if(ucr == "part_one"){
-  f %<>% filter(ucr_category %in% c('Homicide','Rape','Aggravated Assault','Robbery'))  
+  
+  if(ucr == "all"){NULL}
+  else{
+    
+    f %<>% filter(ucr_category %in%)
   }
   
   if(coords == "WGS"){
@@ -42,6 +45,7 @@ function(year = "2019", month = "5", gun = "false", coords = "WGS", ucr = "all")
 }
 
 #* Return Latest Available Data Month
+#* @json
 #* @get /latest
 function(){
   compstatr::cs_last_update()
@@ -65,7 +69,7 @@ function(dbid) {
 #* @param gun If 'true' filters for gun crime
 #* @json
 #* @get /nbhood
-function(year = "2019", month = "5", gun = "false"){
+function(year = "2019", month = "June", gun = "false"){
   year %<>% as.numeric()
   month %<>% as.numeric()
   
@@ -91,7 +95,7 @@ function(year = "2019", month = "5", gun = "false"){
 #* @json
 #* @get /district
 
-function(year = "2019", month = "5", gun = "false"){
+function(year = "2019", month = "June", gun = "false"){
   year %<>% as.numeric()
   month %<>% as.numeric()
   
