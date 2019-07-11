@@ -30,8 +30,7 @@ function(year = "2019", month = "June", gun = "false", coords = "WGS", ucr = "al
   
   if(ucr == "all"){NULL}
   else{
-    
-    f %<>% filter(ucr_category %in%)
+    f %<>% filter(ucr_category %in% ucr)
   }
   
   if(coords == "WGS"){
