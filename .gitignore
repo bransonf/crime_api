@@ -5,3 +5,4 @@
 .httr-oauth
 data/crimeDB.csv
 ._*
+.DS_Store
