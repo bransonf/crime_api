@@ -130,6 +130,19 @@ function(year = "2019", month = "June", gun = "false"){
   
 }
 
+#* Get monthly category summary
+#* @param categories json vector containing ucr categories
+#* @json
+#* @get /catsum
 
+function(categories = '["Homicide"]'){
+  categories %<>% fromJSON
+  crimedb %>%
+    filter(ucr_category %in% categories) -> f
+  f %<>% group_by(month_occur, year_occur, ucr_category) %>%
+    summarise(Records = n())
+    
+  return(f)
+}
 
 
