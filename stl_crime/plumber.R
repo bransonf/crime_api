@@ -155,11 +155,8 @@ function(categories = '["Homicide"]'){
 #* @json
 #* @get /range
 function(start, end = "", gun = "false", coords = "WGS", ucr = "all") {
-  # string manip
-  year %<>% as.numeric()
-  month <- which(month.name == month)
   
-  if(end == ""){
+  if(end == "" | end == "NA"){
     end = start
   }
   
