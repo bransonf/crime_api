@@ -4,7 +4,8 @@ library(plumber)
 library(dplyr)
 library(jsonlite)
 library(magrittr)
-library(compstatr) # requires GitHub version
+library(compstatr)
+library(lubridate)
 load("crimedb.rda")
 
 #* @apiTitle STL Crime Data
@@ -145,4 +146,47 @@ function(categories = '["Homicide"]'){
   return(f)
 }
 
-
+#* Get coords for a specified range of time
+#* @param start The start date for data (Inclusive)
+#* @param end The end date for data (Inclusive) If left empty, will return just data from the start date
+#* @param gun If 'true' filters for gun crime
+#* @param coords Default WGS, else 'NAD_MO_EAST'
+#* @param ucr Name of the crime, as it appears in the Inputs, else 'all'
+#* @json
+#* @get /range
+function(start, end = "", gun = "false", coords = "WGS", ucr = "all") {
+  # string manip
+  year %<>% as.numeric()
+  month <- which(month.name == month)
+  
+  if(end == ""){
+    end = start
+  }
+  
+  # time (baseline) filtering
+  crimedb %>%
+    filter(date_occur >= start) %>%
+    filter(date_occur <= end) -> f
+  
+  # gun filtering
+  if(gun == "true"){
+    f %<>% filter(gun_crime)
+  }
+  
+  # ucr filtering
+  if(ucr == "all"){NULL}
+  else{
+    ucr %<>% jsonlite::fromJSON()
+    f %<>% filter(ucr_category %in% ucr)
+  }
+  
+  # coordinate selection
+  if(coords == "WGS"){
+    f %<>% select(db_id, ucr_category, wgs_x, wgs_y)
+  }
+  if(coords == "NAD_MO_EAST"){
+    f %<>% select(db_id, ucr_category, x_coord, y_coord)  
+  }
+  
+  return(f)
+}
