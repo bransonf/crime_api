@@ -8,11 +8,11 @@
   # Create Index of Available Data
   
   idx <- cs_create_index()
-  crime_dta <- vector("list", 12)
+  crime_dta <- vector("list", 13)
   
   # get all years
-  for (i in 1:12) {
-    crime_dta[[i]] <- cs_get_data(year = (2008:2019)[i], index = idx)  
+  for (i in 1:13) {
+    crime_dta[[i]] <- cs_get_data(year = (2008:2020)[i], index = idx)  
   }
   
   # fix the outliers
@@ -37,7 +37,7 @@
   crimes08_19 <- dplyr::bind_rows(crime_dta[[1]], crime_dta[[2]], crime_dta[[3]],
                                   crime_dta[[4]], crime_dta[[5]], crime_dta[[6]],
                                   crime_dta[[7]], crime_dta[[8]], crime_dta[[9]],
-                                  crime_dta[[10]], crime_dta[[11]], crime_dta[[12]])
+                                  crime_dta[[10]], crime_dta[[11]], crime_dta[[12]], crime_dta[[13]])
   
   
   # add unique id for each row in Database
