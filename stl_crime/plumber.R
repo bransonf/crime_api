@@ -2,6 +2,7 @@
 
 library(plumber)
 library(dplyr)
+library(tidyr)
 library(jsonlite)
 library(magrittr)
 library(compstatr)
@@ -184,6 +185,49 @@ function(start, end = "", gun = "false", coords = "WGS", ucr = "all") {
   if(coords == "NAD_MO_EAST"){
     f %<>% select(db_id, ucr_category, x_coord, y_coord)  
   }
+  
+  return(f)
+}
+
+#* Return Historic Trends
+#* @param start The start date for data (Inclusive)
+#* @param end The end date for data (Inclusive)
+#* @param gun If 'true' filters for gun crime
+#* @param ucr Name of the crime, as it appears in the Inputs, else 'all'
+#*
+#* @json
+#* @get /trends
+function(start, end, gun = 'false', ucr = 'all'){
+  
+  start = as.Date(start)
+  end = as.Date(end)
+  
+  # time (baseline) filtering
+  crimedb %>%
+    filter(date_occur >= start) %>%
+    filter(date_occur <= end) -> f
+  
+  # gun filtering
+  if(gun == "true"){
+    f %<>% filter(gun_crime)
+  }
+  
+  # ucr filtering
+  if(ucr == "all"){NULL}
+  else{
+    ucr %<>% jsonlite::fromJSON()
+    f %<>% filter(ucr_category %in% ucr)
+  }
+  
+  # group by crime and date
+    df <- data.frame(stringsAsFactors = FALSE,
+                     date_occur = seq.Date(start, end, by = 'day')
+    )
+    f %<>% 
+      group_by(date_occur, ucr_category) %>%
+      summarise(incidents = n()) %>%
+      spread(ucr_category, incidents) %>%
+      left_join(df, .)
   
   return(f)
 }

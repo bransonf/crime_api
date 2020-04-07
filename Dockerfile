@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 
 # install R libraries
-RUN R -e "install.packages(c('plumber','dplyr','jsonlite','magrittr','lubridate','remotes'))"
+RUN R -e "install.packages(c('plumber','dplyr', 'tidyr', 'jsonlite','magrittr','lubridate','remotes'))"
 RUN R -e "remotes::install_github('slu-openGIS/compstatr')"
 
 # copy the api script to the server
