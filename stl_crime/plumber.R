@@ -2,11 +2,12 @@
 
 library(plumber)
 library(dplyr)
+library(tidyr)
 library(jsonlite)
 library(magrittr)
 library(compstatr)
 library(lubridate)
-load("stl_crime/crimedb.rda")
+load("crimedb.rda")
 
 #* @apiTitle STL Crime Data
 
@@ -191,13 +192,12 @@ function(start, end = "", gun = "false", coords = "WGS", ucr = "all") {
 #* Return Historic Trends
 #* @param start The start date for data (Inclusive)
 #* @param end The end date for data (Inclusive)
-#* @param interval One of daily, weekly, monthly or yearly
 #* @param gun If 'true' filters for gun crime
 #* @param ucr Name of the crime, as it appears in the Inputs, else 'all'
 #*
 #* @json
 #* @get /trends
-function(start, end, interval = 'monthly', gun = 'false', ucr = 'all'){
+function(start, end, gun = 'false', ucr = 'all'){
   
   start = as.Date(start)
   end = as.Date(end)
@@ -219,32 +219,15 @@ function(start, end, interval = 'monthly', gun = 'false', ucr = 'all'){
     f %<>% filter(ucr_category %in% ucr)
   }
   
-  # group by crime and time period
-  if(interval == 'daily'){
+  # group by crime and date
     df <- data.frame(stringsAsFactors = FALSE,
-                     date_occur = seq.Date(start, end, by = 'days')
+                     date_occur = seq.Date(start, end, by = 'day')
     )
     f %<>% 
       group_by(date_occur, ucr_category) %>%
       summarise(incidents = n()) %>%
+      spread(ucr_category, incidents) %>%
       left_join(df, .)
-    
-  }else if(interval == 'weekly'){
-    f %<>% 
-      mutate(week_occur = week(date_occur)) %>%
-      group_by(year_occur, week_occur, ucr_category) %>%
-      summarise(incidents = n())
-    
-  }else if(interval == 'monthly'){
-    f %<>% 
-      group_by(year_occur, month_occur, ucr_category) %>%
-      summarise(incidents = n())
-    
-  }else if(interval == 'yearly'){
-    f %<>% 
-      group_by(year_occur, ucr_category) %>%
-      summarise(incidents = n())
-  }
   
   return(f)
 }
