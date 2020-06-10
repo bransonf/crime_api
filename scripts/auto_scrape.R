@@ -34,10 +34,8 @@
   crime_dta[[10]][["May"]] <- cs_standardize(crime_dta[[10]], "May", config = 26)$May
   
   # build full dataset
-  crimes08_19 <- dplyr::bind_rows(crime_dta[[1]], crime_dta[[2]], crime_dta[[3]],
-                                  crime_dta[[4]], crime_dta[[5]], crime_dta[[6]],
-                                  crime_dta[[7]], crime_dta[[8]], crime_dta[[9]],
-                                  crime_dta[[10]], crime_dta[[11]], crime_dta[[12]], crime_dta[[13]])
+  crime_dta <- lapply(crime_dta, dplyr::bind_rows)
+  crimes08_19 <- dplyr::bind_rows(crime_dta)
   
   
   # add unique id for each row in Database
